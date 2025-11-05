@@ -44,7 +44,9 @@
       { "command": "vstikzit.mergeNodes", "title": "Edit > Merge Nodes", "category": "TikZiT", "when": "activeCustomEditorId == vstikzit.tikzEditor" },
       { "command": "vstikzit.viewCurrentTikzFigure", "title": "View > TikZ figure PDF", "category": "TikZiT", "when": "activeCustomEditorId == vstikzit.tikzEditor" },
       { "command": "vstikzit.viewTikzSource", "title": "View > TikZ Source", "category": "TikZiT", "when": "activeCustomEditorId == vstikzit.tikzEditor" },
-      { "command": "vstikzit.toggleStylePanel", "title": "View > Toggle Style Panel", "category": "TikZiT", "when": "activeCustomEditorId == vstikzit.tikzEditor" }
+      { "command": "vstikzit.toggleStylePanel", "title": "View > Toggle Style Panel", "category": "TikZiT", "when": "activeCustomEditorId == vstikzit.tikzEditor" },
+      { "command": "tikzmd.editFence", "title": "TikZ: Edit Fence with TikZiT" },
+      { "command": "tikzmd.rebuildFence", "title": "TikZ: Rebuild Fence" }
     ],
     "keybindings": [
       { "command": "vstikzit.openTikzEditor", "key": "ctrl+alt+t", "mac": "cmd+alt+t",
@@ -138,7 +140,53 @@
         ],
         "priority": "default"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "TikZ in Markdown",
+      "properties": {
+        "tikzmd.engine": {
+          "type": "string",
+          "enum": ["pdflatex", "lualatex", "xelatex", "tectonic"],
+          "default": "pdflatex",
+          "description": "LaTeX engine to use when compiling TikZ snippets."
+        },
+        "tikzmd.enginePath": {
+          "type": "string",
+          "default": "",
+          "description": "Optional absolute path to the LaTeX engine executable."
+        },
+        "tikzmd.svgTool": {
+          "type": "string",
+          "enum": ["dvisvgm", "pdftocairo"],
+          "default": "dvisvgm",
+          "description": "Tool used to convert PDF output into SVG."
+        },
+        "tikzmd.svgToolPath": {
+          "type": "string",
+          "default": "",
+          "description": "Optional absolute path to the SVG conversion tool executable."
+        },
+        "tikzmd.preamble": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Additional lines to insert into the LaTeX preamble for Markdown TikZ snippets."
+        },
+        "tikzmd.cacheDir": {
+          "type": "string",
+          "default": "",
+          "description": "Override the directory used to store compiled TikZ artefacts (relative paths resolve against the workspace root)."
+        },
+        "tikzmd.timeoutMs": {
+          "type": "number",
+          "default": 30000,
+          "minimum": 0,
+          "description": "Milliseconds before TikZ compilation is aborted."
+        }
+      }
+    }
   },
   "scripts": {
     "watch": "concurrently \"vite build --mode webview --watch\" \"vite build --mode extension --watch\"",

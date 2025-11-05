@@ -53,6 +53,20 @@ To start syncing, open the command palette and select "TikZiT: Sync TikZ Figures
 
 Both the build and sync commands have variants that will build to SVG instead of PDF, e.g. for use on the web or in [HTML slides](https://www.cs.ox.ac.uk/people/aleks.kissinger/slides/zx/pqs-zx-seminar-sept2025-60min.html). These are both available from the command palette.
 
+## TikZ in Markdown (experimental)
+
+You can embed inline TikZ diagrams inside Markdown documents using fenced code blocks:
+
+````markdown
+```tikz
+\draw (0,0) -- (1,0);
+```
+````
+
+Fences are compiled to SVG on demand via the configured LaTeX toolchain and rendered in the Markdown preview. Each fence also shows a CodeLens action to **Edit with TikZiT**, which opens the custom editor in a temporary `.tikz` file and writes changes back into the Markdown document. Use the **Rebuild TikZ** CodeLens to force recompilation when you adjust settings or install a new LaTeX engine.
+
+Compilation settings live under `tikzmd.*` in VS Code's settings UI. You can choose the LaTeX engine (`pdflatex`, `lualatex`, `xelatex`, or `tectonic`), override executable paths, provide additional preamble lines, and change the cache directory or timeout limits. When settings change, any cached previews are invalidated automatically.
+
 ## TODO
 
 The extension is nearly at feature parity with the desktop application, but there are still some things to do:

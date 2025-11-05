@@ -10,8 +10,23 @@ import {
 } from "./buildTikz";
 import { viewCurrentTikzFigure } from "./viewTikz";
 import path from "path";
+import { MarkdownTikzManager } from "../md/MarkdownTikzManager";
+import { tikzFencePlugin } from "../md/tikzFence";
+import { TikzMarkdownController } from "./tikzMarkdown";
 
-function activate(context: vscode.ExtensionContext): void {
+function activate(context: vscode.ExtensionContext):
+  | { extendMarkdownIt: (md: any) => any }
+  | void {
+  const markdownTikzManager = new MarkdownTikzManager(context);
+  const markdownController = new TikzMarkdownController(context, markdownTikzManager);
+  context.subscriptions.push(markdownController);
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration(event => {
+      if (event.affectsConfiguration("tikzmd")) {
+        markdownTikzManager.clear();
+      }
+    })
+  );
   // register the custom tikz editor
   context.subscriptions.push(
     vscode.window.registerCustomEditorProvider(
@@ -113,6 +128,13 @@ function activate(context: vscode.ExtensionContext): void {
       vscode.commands.registerCommand(command, () => sendCommand(command))
     );
   }
+
+  return {
+    extendMarkdownIt(md: any) {
+      tikzFencePlugin(md, markdownTikzManager);
+      return md;
+    },
+  };
 }
 
 function sendCommand(command: string): void {

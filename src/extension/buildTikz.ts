@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import * as path from "path";
-import { spawn } from "child_process";
 import { TikzEditorProvider } from "./editors";
+import { TikzCompileError, TikzCompileService } from "../renderer/TikzCompileService";
 
 async function prepareBuildDir(workspaceRoot: vscode.Uri, cacheDir: vscode.Uri): Promise<string> {
   let tikzIncludes = "";
@@ -69,16 +69,6 @@ async function cleanAuxFiles(fileName: string, cacheDir: vscode.Uri): Promise<vo
   }
 }
 
-async function sh(path: string, command: string, args: string[]): Promise<number | null> {
-  const cmd = spawn(command, args, { cwd: path, shell: false });
-  return new Promise(resolve => {
-    cmd.on("close", code => {
-      // console.log(`${command} exited with code ${code}`);
-      resolve(code);
-    });
-  });
-}
-
 async function buildTikz(
   workspaceRoot: vscode.Uri,
   fileName: string,
@@ -116,48 +106,13 @@ async function buildTikz(
 
   // if this document has a file name, get the base name
   const baseName = path.basename(fileName, ".tikz") ?? "tikzfigure";
-  const texFile = baseName + ".tmp.tex";
-  let code: number | null = null;
-
-  await vscode.workspace.fs.writeFile(
-    vscode.Uri.joinPath(tikzCacheFolder, texFile),
-    Buffer.from(tex)
-  );
-
-  code = await sh(tikzCacheFolder.fsPath, "pdflatex", [
-    "-interaction=nonstopmode",
-    "-halt-on-error",
-    texFile,
-  ]);
-  if (code !== 0) {
-    throw code;
-  }
-
-  let outExt = "pdf";
-  if (svg) {
-    outExt = "svg";
-    code = await sh(tikzCacheFolder.fsPath, "dvisvgm", [
-      "--pdf",
-      "--no-fonts",
-      "--scale=2,2",
-      baseName + ".tmp.pdf",
-      "-o",
-      baseName + ".tmp.svg",
-    ]);
-    if (code !== 0) {
-      throw code;
-    }
-  }
-
-  // copy the contents of FILE.tmp.(pdf|svg) into FILE.(pdf|svg)
-  // console.log(`Copying ${baseName}.tmp.${outExt} to ${baseName}.${outExt}`);
-  const outContent = await vscode.workspace.fs.readFile(
-    vscode.Uri.joinPath(tikzCacheFolder, `${baseName}.tmp.${outExt}`)
-  );
-  await vscode.workspace.fs.writeFile(
-    vscode.Uri.joinPath(tikzCacheFolder, `${baseName}.${outExt}`),
-    outContent
-  );
+  const compileService = TikzCompileService.instance;
+  await compileService.compile({
+    texSource: tex,
+    baseName,
+    cacheDir: tikzCacheFolder,
+    svg,
+  });
 
   return 0;
 }
@@ -183,19 +138,36 @@ async function buildCurrentTikzFigure(svg: boolean = false): Promise<void> {
     statusBarItem.text = "$(sync~spin) Building TikZ figure";
     statusBarItem.show();
     buildTikz(workspaceRoot, document.uri.fsPath, document.getText(), tikzIncludes, svg).then(
-      async _ => {
-        await cleanAuxFiles(document.uri.fsPath, tikzCacheFolder);
-        await cleanBuildDir(tikzCacheFolder);
-        statusBarItem.dispose();
-      },
-      error => {
-        vscode.window.showErrorMessage(`build exited with error ${error}`);
-        const baseName = path.basename(document.uri.fsPath, ".tikz") ?? "tikzfigure";
-        const logFile = baseName + ".tmp.log";
-        vscode.window.showTextDocument(vscode.Uri.joinPath(tikzCacheFolder, logFile));
-        statusBarItem.dispose();
-      }
-    );
+        async _ => {
+          await cleanAuxFiles(document.uri.fsPath, tikzCacheFolder);
+          await cleanBuildDir(tikzCacheFolder);
+          statusBarItem.dispose();
+        },
+        error => {
+          statusBarItem.dispose();
+          let message = "Failed to build TikZ figure.";
+          let logUri: vscode.Uri | undefined;
+          if (error instanceof TikzCompileError) {
+            message = error.message;
+            if (error.log) {
+              logUri = vscode.Uri.file(error.log);
+            }
+          } else if (error instanceof Error) {
+            message = error.message;
+          } else if (typeof error === "number") {
+            message = `Build exited with error code ${error}`;
+          } else {
+            message = `Build exited with error: ${String(error)}`;
+          }
+          vscode.window.showErrorMessage(message);
+          if (!logUri) {
+            const baseName = path.basename(document.uri.fsPath, ".tikz") ?? "tikzfigure";
+            const logFile = baseName + ".tmp.log";
+            logUri = vscode.Uri.joinPath(tikzCacheFolder, logFile);
+          }
+          vscode.window.showTextDocument(logUri);
+        }
+      );
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     vscode.window.showErrorMessage(`Unexpected error: ${errorMessage}`);
