@@ -392,7 +392,7 @@
     "preview-browser": "concurrently \"vite build --mode browser --watch\" \"vite preview\"",
     "test": "mocha dist/tests.js",
     "pretest": "npm run build-test",
-    "package": "rm -r -f dist && vite build --mode webview && vite build --mode extension && vsce package",
+    "package": "rimraf dist && vite build --mode webview && vite build --mode extension && vsce package",
     "analyze": "vite-bundle-analyzer",
     "publish": "vsce publish"
   },
@@ -415,6 +415,7 @@
     "eslint": "^9.38.0",
     "globals": "^16.4.0",
     "mocha": "^11.7.4",
+    "rimraf": "^6.1.0",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.46.2",
     "vite": "^7.1.12",
