@@ -9,7 +9,7 @@
     "type": "git",
     "url": "https://github.com/tikzit/vstikzit.git"
   },
-  "version": "0.3.0",
+  "version": "0.3.1",
   "engines": {
     "vscode": "^1.103.0"
   },
@@ -24,6 +24,16 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
+    "configuration": {
+      "title": "TikZiT",
+      "properties": {
+        "vstikzit.enableAnimations": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable animations in the TikZ editor."
+        }
+      }
+    },
     "commands": [
       {
         "command": "vstikzit.openTikzEditor",

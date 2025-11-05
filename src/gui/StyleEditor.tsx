@@ -1,22 +1,23 @@
-import { useEffect, useState } from "preact/hooks";
+import { useContext, useEffect, useState } from "preact/hooks";
 import Splitpane from "./Splitpane";
 import StylePanel from "./StylePanel";
 import { ParseError, parseTikzStyles } from "../lib/TikzParser";
 import Styles from "../lib/Styles";
 import Style from "./Style";
 import { StyleData } from "../lib/Data";
-import TikzitHost from "../lib/TikzitHost";
+import TikzitHostContext from "./TikzitHostContext";
 
 interface StyleEditorContent {
+  config: { [key: string]: any };
   document: string;
 }
 
 interface StyleEditorProps {
   initialContent: StyleEditorContent;
-  host: TikzitHost;
 }
 
-const StyleEditor = ({ initialContent, host }: StyleEditorProps) => {
+const StyleEditor = ({ initialContent }: StyleEditorProps) => {
+  const host = useContext(TikzitHostContext);
   const parsed = parseTikzStyles(initialContent.document);
   const [tikzStyles, setTikzStyles] = useState<Styles>(parsed.result ?? new Styles());
   const [enabled, setEnabled] = useState<boolean>(parsed.result !== undefined);
@@ -179,7 +180,7 @@ const StyleEditor = ({ initialContent, host }: StyleEditorProps) => {
           currentNodeLabel={undefined}
           currentNodeStyle={currentNodeStyle}
           currentEdgeStyle={currentEdgeStyle}
-          onCurrentNodeLabelChanged={() => { }}
+          onCurrentNodeLabelChanged={() => {}}
           onNodeStyleChanged={handleCurrentStyleChange}
           onEdgeStyleChanged={handleCurrentStyleChange}
           editMode={true}

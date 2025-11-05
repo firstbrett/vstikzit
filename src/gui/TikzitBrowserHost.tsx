@@ -5,9 +5,11 @@ import "./defaultvars.css";
 import "./gui.css";
 import { ParseError } from "../lib/TikzParser";
 import TikzitHost from "../lib/TikzitHost";
+import TikzitHostContext from "./TikzitHostContext";
 import App from "./App";
 
-class TikzitBrowserHost implements TikzitHost {
+class TikzitBrowserHost extends TikzitHost {
+  private config: { [key: string]: any } = {};
   private updateFromGuiHandler: ((source: string) => void) | undefined = undefined;
   private updateToGuiHandler: ((source: string) => void) | undefined = undefined;
   private commandHandler: ((command: string) => void) | undefined = undefined;
@@ -24,6 +26,10 @@ class TikzitBrowserHost implements TikzitHost {
     if (this.updateFromGuiHandler) {
       this.updateFromGuiHandler(tikz);
     }
+  }
+
+  public getConfig(key: string): any {
+    return this.config[key];
   }
 
   public updateToGui(tikz: string) {
@@ -58,7 +64,13 @@ class TikzitBrowserHost implements TikzitHost {
 
   public renderTikzEditor(container: HTMLElement, initialContent: TikzEditorContent) {
     try {
-      render(<App initialContent={initialContent} host={this} />, container);
+      this.config = initialContent.config;
+      render(
+        <TikzitHostContext value={this}>
+          <App initialContent={initialContent} />
+        </TikzitHostContext>,
+        container
+      );
     } catch (error) {
       console.error("Error rendering TikzEditor:", error);
       container.innerHTML = `<div style="padding: 20px; color: red;">${error}</div>`;
@@ -67,7 +79,13 @@ class TikzitBrowserHost implements TikzitHost {
 
   public renderStyleEditor(container: HTMLElement, initialContent: StyleEditorContent) {
     try {
-      render(<StyleEditor initialContent={initialContent} host={this} />, container);
+      this.config = initialContent.config;
+      render(
+        <TikzitHostContext value={this}>
+          <StyleEditor initialContent={initialContent} />
+        </TikzitHostContext>,
+        container
+      );
     } catch (error) {
       console.error("Error rendering StyleEditor:", error);
       container.innerHTML = `<div style="padding: 20px; color: red;">${error}</div>`;
