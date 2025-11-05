@@ -15,7 +15,7 @@ To install the latest development version, clone the [Git repo](https://github.c
 
 ## Usage
 
-Once the extension is installed, `.tikz` files will automatically open in the TikZiT editor. The UI should be famliar if you have used TikZiT before. If you are not familiar with TikZiT, press `?` to see a list of keyboard shortcuts, and have a look at the [Quickstart guide](https://tikzit.github.io/#quickstart) to get an overview of how things work. While these docs are written for the desktop application, all the main features are the same in this extension.
+Once the extension is installed, `.tikz` files will automatically open in the TikZiT editor. Markdown files that contain fenced code blocks labelled `tikz` (or `latex`) with TikZ content such as `\begin{tikzpicture}` or `\begin{document}` will also switch to the TikZiT editor automatically. The UI should be famliar if you have used TikZiT before. If you are not familiar with TikZiT, press `?` to see a list of keyboard shortcuts, and have a look at the [Quickstart guide](https://tikzit.github.io/#quickstart) to get an overview of how things work. While these docs are written for the desktop application, all the main features are the same in this extension.
 
 TikZiT expects your workspace to be a LaTeX project set up similarly to the [TikZiT template](https://github.com/tikzit/template-quantum). Namely, `.tikz` files are stored in a `figures/` subdirectory, and the route directory additionally contains [tikzit.sty](https://github.com/tikzit/template-quantum/blob/master/tikzit.sty), as well as a `.tikzstyles`, and optionally a `.tikzdefs`.
 

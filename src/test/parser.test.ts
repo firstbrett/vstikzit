@@ -111,6 +111,27 @@ describe("Graph parser", () => {
     assert.strictEqual(g1.node(2), g2.node(2), "g1[2] ? g3[2]");
     assert.strictEqual(g1.node(3), g2.node(3), "g1[3] ? g3[3]");
   });
+
+  it("should ignore latex prolog and epilog when parsing tikz pictures", () => {
+    const input = `
+    \\documentclass{standalone}
+    \\usepackage{tikz}
+    \\begin{document}
+    \\begin{tikzpicture}
+    \\node [style=A] (0) at (0, 0) {a};
+    \\end{tikzpicture}
+    \\end{document}`;
+
+    const parsed = parseTikzPicture(input);
+    assert.notStrictEqual(parsed.result, undefined);
+
+    const g = parsed.result!;
+    const tikz = strip(g.tikz());
+    assert.isFalse(/\\documentclass/.test(tikz));
+    assert.isFalse(/\\begin\{document}/.test(tikz));
+    assert.match(tikz, /\\begin\{tikzpicture}/);
+    assert.match(tikz, /\\node \[style=A] \(0\) at \(0, 0\) {a};/);
+  });
 });
 
 describe("Tikzstyles parser", () => {

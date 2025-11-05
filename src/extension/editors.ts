@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import * as path from "path";
+import { findMarkdownTikzBlock, isMarkdownDocument } from "./markdown";
 
 function currentUri(): vscode.Uri | undefined {
   const activeTab = vscode.window.tabGroups.activeTabGroup.activeTab;
@@ -67,8 +68,28 @@ class BaseEditorProvider {
     };
   }
 
-  protected async initialContent(document: vscode.TextDocument): Promise<string> {
-    return JSON.stringify({ config: this.guiConfig(), document: document.getText() });
+  protected getDocumentContent(document: vscode.TextDocument): string {
+    return document.getText();
+  }
+
+  protected getDocumentContentForUpdate(document: vscode.TextDocument): string | undefined {
+    return this.getDocumentContent(document);
+  }
+
+  protected async applyDocumentContent(
+    document: vscode.TextDocument,
+    content: string
+  ): Promise<boolean> {
+    const edit = new vscode.WorkspaceEdit();
+    edit.replace(document.uri, new vscode.Range(0, 0, document.lineCount, 0), content);
+    return vscode.workspace.applyEdit(edit);
+  }
+
+  protected async initialContent(
+    document: vscode.TextDocument,
+    documentContent: string
+  ): Promise<string> {
+    return JSON.stringify({ config: this.guiConfig(), document: documentContent });
   }
 
   async resolveCustomTextEditor(
@@ -85,7 +106,8 @@ class BaseEditorProvider {
     };
 
     // Set up the initial webview content
-    const contentJson = await this.initialContent(document);
+    const documentContent = this.getDocumentContent(document);
+    const contentJson = await this.initialContent(document, documentContent);
     webviewPanel.webview.html = await this.getHtmlForWebview(webviewPanel.webview, contentJson);
 
     // Post document changes (e.g. undo/redo) to the webview. We use the isUpdatingFromGui flag
@@ -94,10 +116,13 @@ class BaseEditorProvider {
       (e: vscode.TextDocumentChangeEvent) => {
         // console.log('Document changed, isUpdatingFromGui:', this.isUpdatingFromGui);
         if (e.document.uri.toString() === document.uri.toString() && !this.isUpdatingFromGui) {
-          webviewPanel.webview.postMessage({
-            type: "updateToGui",
-            content: document.getText(),
-          });
+          const updatedContent = this.getDocumentContentForUpdate(document);
+          if (updatedContent !== undefined) {
+            webviewPanel.webview.postMessage({
+              type: "updateToGui",
+              content: updatedContent,
+            });
+          }
         }
       }
     );
@@ -196,9 +221,7 @@ class BaseEditorProvider {
   async updateFromGui(document: vscode.TextDocument, content: string): Promise<boolean> {
     // console.log("got update from gui");
     this.isUpdatingFromGui = true;
-    const edit = new vscode.WorkspaceEdit();
-    edit.replace(document.uri, new vscode.Range(0, 0, document.lineCount, 0), content);
-    const result = await vscode.workspace.applyEdit(edit);
+    const result = await this.applyDocumentContent(document, content);
     this.isUpdatingFromGui = false;
     return result;
   }
@@ -312,13 +335,59 @@ class TikzEditorProvider extends BaseEditorProvider implements vscode.CustomText
     this.entryPoint = "renderTikzEditor";
   }
 
-  protected async initialContent(document: vscode.TextDocument): Promise<string> {
+  protected getDocumentContent(document: vscode.TextDocument): string {
+    if (isMarkdownDocument(document)) {
+      const block = findMarkdownTikzBlock(document);
+      if (block) {
+        return block.content;
+      }
+    }
+    return super.getDocumentContent(document);
+  }
+
+  protected getDocumentContentForUpdate(document: vscode.TextDocument): string | undefined {
+    if (isMarkdownDocument(document)) {
+      const block = findMarkdownTikzBlock(document);
+      return block?.content;
+    }
+    return super.getDocumentContentForUpdate(document);
+  }
+
+  protected async applyDocumentContent(
+    document: vscode.TextDocument,
+    content: string
+  ): Promise<boolean> {
+    if (isMarkdownDocument(document)) {
+      const block = findMarkdownTikzBlock(document);
+      if (!block) {
+        return false;
+      }
+
+      let nextContent = content;
+      if (block.hasTrailingNewline && !nextContent.endsWith("\n")) {
+        nextContent += "\n";
+      } else if (!block.hasTrailingNewline && nextContent.endsWith("\n")) {
+        nextContent = nextContent.replace(/\n$/, "");
+      }
+
+      const edit = new vscode.WorkspaceEdit();
+      edit.replace(document.uri, block.range, nextContent);
+      return vscode.workspace.applyEdit(edit);
+    }
+
+    return super.applyDocumentContent(document, content);
+  }
+
+  protected async initialContent(
+    document: vscode.TextDocument,
+    documentContent: string
+  ): Promise<string> {
     const [styleFile, styles] = await this.getTikzStyles();
     const content = {
       config: this.guiConfig(),
       styleFile: path.basename(styleFile),
       styles: styles,
-      document: document.getText(),
+      document: documentContent,
     };
     return JSON.stringify(content);
   }
