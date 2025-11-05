@@ -364,10 +364,14 @@ class TikzEditorProvider extends BaseEditorProvider implements vscode.CustomText
       }
 
       let nextContent = content;
-      if (block.hasTrailingNewline && !nextContent.endsWith("\n")) {
-        nextContent += "\n";
-      } else if (!block.hasTrailingNewline && nextContent.endsWith("\n")) {
-        nextContent = nextContent.replace(/\n$/, "");
+      if (block.trailingNewline) {
+        if (nextContent.endsWith("\r\n") || nextContent.endsWith("\n")) {
+          nextContent = nextContent.replace(/\r?\n$/, block.trailingNewline);
+        } else {
+          nextContent += block.trailingNewline;
+        }
+      } else if (nextContent.endsWith("\r\n") || nextContent.endsWith("\n")) {
+        nextContent = nextContent.replace(/\r?\n$/, "");
       }
 
       const edit = new vscode.WorkspaceEdit();
