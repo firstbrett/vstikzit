@@ -1,4 +1,7 @@
 import type MarkdownIt from "markdown-it";
+import type { Options } from "markdown-it";
+import type Token from "markdown-it/lib/token.mjs";
+import type Renderer from "markdown-it/lib/renderer.mjs";
 import { MarkdownTikzManager } from "./MarkdownTikzManager";
 
 function escapeHtml(value: string): string {
@@ -11,11 +14,22 @@ function escapeHtml(value: string): string {
 }
 
 function tikzFencePlugin(md: MarkdownIt, manager: MarkdownTikzManager): void {
-  const originalFence =
-    md.renderer.rules.fence ??
-    ((tokens, idx, options, env, self) => self.renderToken(tokens, idx, options));
+  const defaultFence = (
+    tokens: Token[],
+    idx: number,
+    options: Options,
+    _env: unknown,
+    self: Renderer
+  ): string => self.renderToken(tokens, idx, options);
+  const originalFence = md.renderer.rules.fence ?? defaultFence;
 
-  md.renderer.rules.fence = (tokens, idx, options, env, self) => {
+  md.renderer.rules.fence = (
+    tokens: Token[],
+    idx: number,
+    options: Options,
+    env: unknown,
+    self: Renderer
+  ) => {
     const token = tokens[idx];
     const lang = (token.info || "").trim().toLowerCase();
 

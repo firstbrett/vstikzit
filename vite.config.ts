@@ -17,7 +17,7 @@ export default defineConfig(({ mode }) => {
         outDir: "dist",
         emptyOutDir: false,
         rollupOptions: {
-          external: ["vscode", "path", "child_process", "fs", "util", "events", "stream"],
+          external: ["vscode", "path", "child_process", "fs", "util", "events", "stream", "os", "crypto"],
         },
         target: "node16",
       },
