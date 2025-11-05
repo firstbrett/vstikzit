@@ -512,14 +512,70 @@ interface ParseTikzStylesResult {
   errors: ParseError[];
 }
 
+interface NormalizedTikzEnvironment {
+  text: string;
+  lineOffset: number;
+  columnOffset: number;
+}
+
+function extractTikzEnvironment(input: string): NormalizedTikzEnvironment {
+  const envRegex = /(\\begin\{tikzpicture\})|(\\end\{tikzpicture\})/g;
+  let match: RegExpExecArray | null;
+  let depth = 0;
+  let start = -1;
+  let end = -1;
+
+  while ((match = envRegex.exec(input))) {
+    if (match[1]) {
+      depth++;
+      if (depth === 1) {
+        start = match.index;
+      }
+    } else if (match[2]) {
+      if (depth > 0) {
+        depth--;
+        if (depth === 0) {
+          end = envRegex.lastIndex;
+          break;
+        }
+      }
+    }
+  }
+
+  if (start !== -1 && end !== -1) {
+    const prefix = input.slice(0, start);
+    const lineMatches = prefix.match(/\r?\n/g);
+    const lineOffset = lineMatches ? lineMatches.length : 0;
+    const lastNewline = Math.max(prefix.lastIndexOf("\n"), prefix.lastIndexOf("\r"));
+    const columnOffset = lastNewline === -1 ? prefix.length : prefix.length - lastNewline - 1;
+
+    return {
+      text: input.slice(start, end),
+      lineOffset,
+      columnOffset,
+    };
+  }
+
+  return {
+    text: input,
+    lineOffset: 0,
+    columnOffset: 0,
+  };
+}
+
 function parseTikz(
   input: string,
   parseStyles: boolean
 ): ParseTikzPictureResult | ParseTikzStylesResult {
-  const lexResult = lexer.tokenize(input);
+  const normalization: NormalizedTikzEnvironment = parseStyles
+    ? { text: input, lineOffset: 0, columnOffset: 0 }
+    : extractTikzEnvironment(input);
+  const lexResult = lexer.tokenize(normalization.text);
   if (lexResult.errors.length > 0) {
     return {
-      errors: lexResult.errors.map(e => new ParseError(e.line || 1, e.column || 1, e.message)),
+      errors: lexResult.errors.map(e =>
+        createOffsetParseError(e.line || 1, e.column || 1, e.message, normalization)
+      ),
     };
   }
 
@@ -545,8 +601,13 @@ function parseTikz(
 
     if (parser.errors.length > 0) {
       return {
-        errors: parser.errors.map(
-          e => new ParseError(e.token?.startLine || 1, e.token?.startColumn || 1, e.message)
+        errors: parser.errors.map(e =>
+          createOffsetParseError(
+            e.token?.startLine || 1,
+            e.token?.startColumn || 1,
+            e.message,
+            normalization
+          )
         ),
       };
     }
@@ -560,7 +621,9 @@ function parseTikz(
   } catch (e) {
     if (e instanceof ParseError) {
       return {
-        errors: [e],
+        errors: [
+          createOffsetParseError(e.line, e.column, e.message, normalization),
+        ],
       };
     } else {
       throw e;
@@ -604,3 +667,15 @@ export {
   isValidPropertyVal,
   isValidDelimString,
 };
+
+function createOffsetParseError(
+  line: number,
+  column: number,
+  message: string,
+  normalization: NormalizedTikzEnvironment
+): ParseError {
+  const adjustedLine = line + normalization.lineOffset;
+  const adjustedColumn =
+    line === 1 ? column + normalization.columnOffset : column;
+  return new ParseError(adjustedLine, adjustedColumn, message);
+}
