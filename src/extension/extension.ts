@@ -10,6 +10,45 @@ import {
 } from "./buildTikz";
 import { viewCurrentTikzFigure } from "./viewTikz";
 import path from "path";
+import {
+  containsTikzMarkdown,
+  findMarkdownTikzBlock,
+  isMarkdownDocument,
+} from "./markdown";
+
+function shouldOpenInTikzEditor(document: vscode.TextDocument): boolean {
+  const extension = path.extname(document.uri.fsPath).toLowerCase();
+  if (extension === ".tikz") {
+    return true;
+  }
+  if (isMarkdownDocument(document)) {
+    return containsTikzMarkdown(document.getText());
+  }
+  return false;
+}
+
+async function openTikzEditorForDocument(document: vscode.TextDocument): Promise<void> {
+  const activeEditor = vscode.window.activeTextEditor;
+  const targetColumn = activeEditor?.viewColumn ?? vscode.ViewColumn.One;
+
+  await vscode.window.showTextDocument(document, {
+    viewColumn: targetColumn,
+    preserveFocus: true,
+    preview: false,
+  });
+
+  await vscode.commands.executeCommand(
+    "vscode.openWith",
+    document.uri,
+    "vstikzit.tikzEditor",
+    {
+      preview: false,
+      viewColumn: vscode.ViewColumn.Beside,
+    }
+  );
+}
+
+const autoOpenedMarkdown = new Set<string>();
 
 function activate(context: vscode.ExtensionContext): void {
   // register the custom tikz editor
@@ -76,6 +115,30 @@ function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("vstikzit.openOrCreateTikz", openOrCreateTikz)
   );
 
+  context.subscriptions.push(
+    vscode.workspace.onDidOpenTextDocument(document => {
+      if (
+        shouldOpenInTikzEditor(document) &&
+        isMarkdownDocument(document) &&
+        findMarkdownTikzBlock(document)
+      ) {
+        const key = document.uri.toString();
+        if (!autoOpenedMarkdown.has(key)) {
+          autoOpenedMarkdown.add(key);
+          setTimeout(() => {
+            void openTikzEditorForDocument(document);
+          }, 0);
+        }
+      }
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.workspace.onDidCloseTextDocument(document => {
+      autoOpenedMarkdown.delete(document.uri.toString());
+    })
+  );
+
   // // register the tikz link provider for LaTeX files
   // context.subscriptions.push(
   //   vscode.languages.registerDocumentLinkProvider(
@@ -131,18 +194,18 @@ async function showError(uri: string, line?: number, column?: number): Promise<v
 }
 
 function openTikzEditor(): void {
-  if (vscode.window.activeTextEditor) {
-    const uri = vscode.window.activeTextEditor.document.uri;
-    if (uri.fsPath.endsWith(".tikz")) {
-      if (vscode.window.activeTextEditor.document.isDirty === false) {
-        vscode.commands.executeCommand("workbench.action.closeActiveEditor");
-      }
-
-      vscode.commands.executeCommand("vscode.openWith", uri, "vstikzit.tikzEditor");
-    } else {
-      vscode.commands.executeCommand("editor.action.openLink");
-    }
+  const editor = vscode.window.activeTextEditor;
+  if (!editor) {
+    return;
   }
+
+  const document = editor.document;
+  if (shouldOpenInTikzEditor(document)) {
+    void openTikzEditorForDocument(document);
+    return;
+  }
+
+  vscode.commands.executeCommand("editor.action.openLink");
 }
 
 async function openOrCreateTikz(uriStr: string): Promise<void> {
