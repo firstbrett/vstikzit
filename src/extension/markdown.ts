@@ -26,7 +26,7 @@ export function containsTikzMarkdown(text: string): boolean {
 export interface MarkdownTikzBlock {
   content: string;
   range: vscode.Range;
-  hasTrailingNewline: boolean;
+  trailingNewline: string | undefined;
 }
 
 export function findMarkdownTikzBlock(document: vscode.TextDocument): MarkdownTikzBlock | undefined {
@@ -53,10 +53,12 @@ export function findMarkdownTikzBlock(document: vscode.TextDocument): MarkdownTi
     const endPosition = document.positionAt(contentEndOffset);
     const range = new vscode.Range(startPosition, endPosition);
 
+    const trailingNewlineMatch = blockContent.match(/(\r?\n)$/);
+
     return {
       content: blockContent,
       range,
-      hasTrailingNewline: blockContent.endsWith("\n"),
+      trailingNewline: trailingNewlineMatch ? trailingNewlineMatch[1] : undefined,
     };
   }
 
