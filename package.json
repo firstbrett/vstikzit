@@ -19,7 +19,8 @@
   "activationEvents": [
     "onLanguage:tex",
     "onLanguage:latex",
-    "onLanguage:html"
+    "onLanguage:html",
+    "onLanguage:markdown"
   ],
   "main": "./dist/extension.js",
   "contributes": {
