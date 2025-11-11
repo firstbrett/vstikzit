@@ -12,6 +12,14 @@ This roadmap tracks the TikZiT Extension Improvement Plan from AGENTS.md and map
   - Add formatting/comment preservation strategy (token spans with passthrough segments) — design stub + TODOs.
   - Add regression tests under `src/test/roundtrip/` with fixtures.
 
+### New modular parser/serializer framework (skeleton in repo)
+- Added `src/parser/` with:
+  - `ast.ts`: simple AST representing `RawText`, `EnvironmentBlock`, and `CommandStmt`.
+  - `index.ts`: permissive scanner `parseTikzDocument()` that extracts `tikzpicture`/`circuitikz` env blocks and preserves everything else as raw text, plus `serializeTikzDocument()` for round-tripping.
+  - `errors.ts`, `util.ts`: helpers and error types.
+- Added tests: `src/test/fullparser.test.ts` to validate round‑trip and block discovery.
+- This provides a safe round‑trip base we can extend with deeper parsing for commands/paths without breaking formatting.
+
 ## 2. Style Ingestion & Palette
 - Current: `.tikzstyles` auto-read via `BaseEditorProvider.getTikzStyles()` and visible in Style Panel.
 - Gaps:
@@ -70,4 +78,3 @@ Short-term deliverables in this commit:
 - Style name validation utilities + UI integration.
 - Inline TikZ open command scaffold.
 - Roadmap document (this file).
-
