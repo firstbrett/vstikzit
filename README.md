@@ -96,14 +96,15 @@ There are also build scripts for a standalone version that runs in the browser. 
 
 ### Quick dev + inline TikZ test (PowerShell)
 
-On Windows or PowerShell, run the helper script to check deps, build/package, install the extension, and open a sample `.tex` file ready for inline TikZ testing:
+Two scripts are provided to streamline local development and release packaging.
 
-- `pwsh scripts/dev-check-and-run.ps1`
+- Dev Host (loads this repo directly):
+  - `pwsh scripts/dev-host.ps1`
+  - Installs deps (ci with fallback), builds `dist/`, creates a sample `.tex`, and launches a VS Code Extension Development Host with this repo.
+  - Flags: `-InstallLaTeXWorkshop`, `-Workspace <path>`, `-CreateSample:$false`, `-RunInlineCommand:$false`, `-VSCodeCmd <code.cmd>`
+  - In the Dev Host window, you can run “TikZiT: Open Inline TikZ Block” (Ctrl+Alt+I) inside a `.tex` file.
 
-Options:
-- `-SkipInstall` to skip `npm ci`
-- `-SkipPackage` to build without packaging (not recommended if you want to install into VS Code)
-- `-InstallLaTeXWorkshop` to ensure LaTeX Workshop is installed
-- `-VSCodeCmd path\to\code.cmd` to specify a custom VS Code CLI
-
-After launch, open `main.tex` and run the command “TikZiT: Open Inline TikZ Block” (Ctrl+Alt+I) to try the split-view editor.
+- Package Release VSIX:
+  - `pwsh scripts/package-release.ps1`
+  - Installs deps (ci with fallback), performs a clean build + `vsce package`, and prints the path of the generated `.vsix`.
+  - Flags: `-Install` to install into your VS Code after packaging, `-VSCodeCmd <code.cmd>`
