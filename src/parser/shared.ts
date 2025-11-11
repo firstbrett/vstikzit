@@ -42,6 +42,25 @@ function parseRef(str: string, i: number): { ref?: PathRef; next: number } {
   return { ref, next: reCoord.lastIndex };
 }
 
-export { skipWs, parseOptionsAt, parseRef };
+function parseBracedText(src: string, i: number): { text?: string; next: number } {
+  i = skipWs(src, i);
+  if (src[i] !== '{') return { next: i };
+  let depth = 1;
+  let j = i + 1;
+  while (j < src.length) {
+    const c = src[j];
+    if (c === '{') depth++;
+    else if (c === '}') {
+      depth--;
+      if (depth === 0) {
+        return { text: src.slice(i + 1, j), next: j + 1 };
+      }
+    }
+    j++;
+  }
+  return { next: i }; // Unmatched brace
+}
+
+export { skipWs, parseOptionsAt, parseRef, parseBracedText };
 export type { PathRef };
 

@@ -31,12 +31,21 @@ interface DrawChain {
   range: Range;
 }
 
-type CtzStmt = DrawChain; // extend with nodes/coordinates if needed
+interface CtzNodeStmt {
+  kind: "CtzNode";
+  options?: CtzOptionList;
+  name?: string;
+  at: PathRef;
+  label?: string;
+  range: Range;
+}
+
+type CtzStmt = DrawChain | CtzNodeStmt;
 
 interface CircuitikzPicture {
   kind: "Circuitikz";
   stmts: CtzStmt[];
 }
 
-export type { CircuitikzPicture, CtzStmt, DrawChain, CtzSeg, WireSeg, ComponentSeg, CtzOptionList };
+export type { CircuitikzPicture, CtzStmt, DrawChain, CtzNodeStmt, CtzSeg, WireSeg, ComponentSeg, CtzOptionList };
 

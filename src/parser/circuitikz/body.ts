@@ -1,6 +1,6 @@
 import type { Range } from "../ast";
-import { skipWs, parseOptionsAt, parseRef, PathRef } from "../shared";
-import type { CircuitikzPicture, CtzStmt, DrawChain, CtzSeg, ComponentSeg, WireSeg } from "./ast";
+import { skipWs, parseOptionsAt, parseRef, PathRef, parseBracedText } from "../shared";
+import type { CircuitikzPicture, CtzStmt, DrawChain, CtzSeg, ComponentSeg, WireSeg, CtzNodeStmt } from "./ast";
 
 function rng(start: number, end: number): Range {
   return { start: { offset: start }, end: { offset: end } };
@@ -77,14 +77,53 @@ function parseDrawCtz(stmt: string, startOffset: number): DrawChain | undefined 
   return chain;
 }
 
+function parseNodeCtz(stmt: string, startOffset: number): CtzNodeStmt | undefined {
+  if (!/^\s*\\node\b/.test(stmt)) return undefined;
+  let i = stmt.indexOf('\\node') + 5;
+
+  const oNode = parseOptionsAt(stmt, i);
+  i = oNode.next;
+
+  const nameRef = parseRef(stmt, i);
+  i = nameRef.next;
+
+  i = skipWs(stmt, i);
+  if (stmt.slice(i, i + 2) !== 'at') return undefined;
+  i += 2;
+
+  const atRef = parseRef(stmt, i);
+  if (!atRef.ref) return undefined;
+  i = atRef.next;
+
+  const label = parseBracedText(stmt, i);
+  i = label.next;
+
+  const node: CtzNodeStmt = {
+    kind: 'CtzNode',
+    options: oNode.options,
+    name: nameRef.ref?.name,
+    at: atRef.ref,
+    label: label.text,
+    range: rng(startOffset, startOffset + stmt.length),
+  };
+  return node;
+}
+
 function parseCircuitikzBody(body: string): CircuitikzPicture {
   const stmts: CtzStmt[] = [];
   for (const { stmt, start } of splitStatements(body)) {
     const d = parseDrawCtz(stmt, start);
-    if (d) stmts.push(d);
+    if (d) {
+      stmts.push(d);
+      continue;
+    }
+    const n = parseNodeCtz(stmt, start);
+    if (n) {
+      stmts.push(n);
+      continue;
+    }
   }
   return { kind: 'Circuitikz', stmts };
 }
 
 export { parseCircuitikzBody };
-

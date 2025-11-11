@@ -108,7 +108,7 @@ async function openInlineTikz(): Promise<void> {
   const untitled = await vscode.workspace.openTextDocument({ language: "latex", content });
   await vscode.window.showTextDocument(untitled, { preview: false, viewColumn: vscode.ViewColumn.Beside });
 
-  if (chosen.env === "tikzpicture") {
+  if (chosen.env === "tikzpicture" || chosen.env === "circuitikz") {
     // Open with custom TikZiT editor
     await vscode.commands.executeCommand("vscode.openWith", untitled.uri, "vstikzit.tikzEditor");
   }

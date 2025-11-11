@@ -28,4 +28,29 @@ describe("TikZ picture adapter -> Graph", () => {
     // one edge still created despite [->] and spacing
     assert.equal(g.numEdges, 1);
   });
+
+  it("parses a coordinate", () => {
+    const body = `
+      \\coordinate (A) at (0,0);
+    `;
+    const pic = parseTikzPictureBody(body);
+    assert.equal(pic.stmts.length, 1);
+    const stmt = pic.stmts[0];
+    assert.equal(stmt.kind, "CoordinateStmt");
+    if (stmt.kind === "CoordinateStmt") {
+      assert.equal(stmt.name, "A");
+      assert.deepEqual(stmt.coord, { x: 0, y: 0 });
+    }
+  it("parses a path statement", () => {
+    const body = `
+      \path (0,0) to (1,1);
+    `;
+    const pic = parseTikzPictureBody(body);
+    assert.equal(pic.stmts.length, 1);
+    const stmt = pic.stmts[0];
+    assert.equal(stmt.kind, "PathStmt");
+    if (stmt.kind === "PathStmt") {
+      assert.equal(stmt.segments.length, 1);
+    }
+  });
 });

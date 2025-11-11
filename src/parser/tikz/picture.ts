@@ -4,9 +4,12 @@ import type {
   TikzStmt,
   NodeStmt,
   DrawStmt,
+  CoordinateStmt,
+  PathStmt,
   TikzOptionList,
   PathRef,
   ToSegment,
+  DrawSegment,
   TikzLayer,
 } from "./ast";
 
@@ -88,9 +91,163 @@ function parseNodeStmt(stmt: string, startOffset: number): NodeStmt | undefined 
   return node;
 }
 
+function parseCoordinateStmt(stmt: string, startOffset: number): CoordinateStmt | undefined {
+  // \coordinate [opts] (name) at (x, y);
+  if (!/^\s*\\coordinate\b/.test(stmt)) return undefined;
+  let i = stmt.indexOf("\\coordinate") + "\\coordinate".length;
+  i = skipWs(stmt, i);
+  // options
+  const o1 = parseOptionsAt(stmt, i);
+  i = o1.next;
+  // name
+  const r1 = parseRef(stmt, i);
+  i = r1.next;
+  // at (x, y)
+  const atIdx = stmt.indexOf("at", i);
+  if (atIdx === -1) return undefined;
+  i = atIdx + 2;
+  const r2 = parseRef(stmt, i);
+  i = r2.next;
+  const coordParts = (r2.ref && r2.ref.raw ? r2.ref.raw.slice(1, -1).split(",") : []).map(s => parseFloat(s.trim()));
+  const node: CoordinateStmt = {
+    kind: "CoordinateStmt",
+    options: o1.options,
+    name: r1.ref?.name,
+    coord: coordParts.length === 2 ? { x: coordParts[0], y: coordParts[1] } : undefined,
+    range: rng(startOffset, startOffset + stmt.length),
+  };
+  return node;
+}
+
 function parseDrawStmt(stmt: string, startOffset: number): DrawStmt | undefined {
   if (!/^\s*\\draw\b/.test(stmt)) return undefined;
   let i = stmt.indexOf("\\draw") + "\\draw".length;
+  i = skipWs(stmt, i);
+  // options
+  const o1 = parseOptionsAt(stmt, i);
+  i = o1.next;
+  // source ref
+  const rsrc = parseRef(stmt, i);
+  if (!rsrc.ref) return undefined;
+  i = rsrc.next;
+  const segments: DrawSegment[] = [];
+  const toRe = /\bto\b/y;
+  const bezierRe = /\.\.\s*controls\b/y;
+  const cycleRe = /--\s*cycle\b/y;
+  const hvRe = /\|-/y;
+  const vhRe = /-\|/y;
+  while (true) {
+    i = skipWs(stmt, i);
+    toRe.lastIndex = i;
+    bezierRe.lastIndex = i;
+    cycleRe.lastIndex = i;
+    hvRe.lastIndex = i;
+    vhRe.lastIndex = i;
+    const tm = toRe.exec(stmt);
+    const bm = bezierRe.exec(stmt);
+    const cm = cycleRe.exec(stmt);
+    const hv = hvRe.exec(stmt);
+    const vh = vhRe.exec(stmt);
+    if (!tm && !bm && !cm && !hv && !vh) break;
+
+    if (hv) {
+      i = hvRe.lastIndex;
+      const rt = parseRef(stmt, i);
+      if (!rt.ref) break;
+      i = rt.next;
+      segments.push({ kind: "ToSegment", target: rt.ref });
+      continue;
+    }
+
+    if (vh) {
+      i = vhRe.lastIndex;
+      const rt = parseRef(stmt, i);
+      if (!rt.ref) break;
+      i = rt.next;
+      segments.push({ kind: "ToSegment", target: rt.ref });
+      continue;
+    }
+
+    if (cm) {
+      i = cycleRe.lastIndex;
+      segments.push({
+        kind: "ToSegment",
+        target: { raw: "cycle" },
+      });
+      continue;
+    }
+
+    if (bm) {
+      i = bezierRe.lastIndex;
+      const c1 = parseRef(stmt, i);
+      if (!c1.ref) break;
+      i = c1.next;
+      i = skipWs(stmt, i);
+      if (stmt.slice(i, i + 3) !== "and") break;
+      i += 3;
+      const c2 = parseRef(stmt, i);
+      if (!c2.ref) break;
+      i = c2.next;
+      i = skipWs(stmt, i);
+      if (stmt.slice(i, i + 2) !== "..") break;
+      i += 2;
+      const rt = parseRef(stmt, i);
+      if (!rt.ref) break;
+      i = rt.next;
+      segments.push({
+        kind: "BezierSegment",
+        control1: c1.ref,
+        control2: c2.ref,
+        target: rt.ref,
+      });
+      continue;
+    }
+
+    if (tm) {
+      i = toRe.lastIndex;
+      // per-segment options
+      const oseg = parseOptionsAt(stmt, i);
+      i = oseg.next;
+      // optional inline node: node[...]{...}
+      const nodeRe = /\bnode\b/y;
+      i = skipWs(stmt, i);
+      nodeRe.lastIndex = i;
+      let edgeNode;
+      const nm = nodeRe.exec(stmt);
+      if (nm) {
+        i = nodeRe.lastIndex;
+        const on = parseOptionsAt(stmt, i);
+        i = on.next;
+        const labelRe = /\{([^}]*)\}/y;
+        i = skipWs(stmt, i);
+        labelRe.lastIndex = i;
+        const lb = labelRe.exec(stmt);
+        if (lb) {
+          i = labelRe.lastIndex;
+        }
+        edgeNode = { options: on.options, labelRaw: lb ? `{${lb[1]}}` : undefined };
+      }
+      // target ref
+      const rt = parseRef(stmt, i);
+      if (!rt.ref) break;
+      i = rt.next;
+      segments.push({ kind: "ToSegment", options: oseg.options, edgeNode, target: rt.ref });
+    }
+  }
+
+  const draw: DrawStmt = {
+    kind: "DrawStmt",
+    options: o1.options,
+    source: rsrc.ref,
+    segments,
+    range: rng(startOffset, startOffset + stmt.length),
+  };
+  return draw;
+}
+
+function parsePathStmt(stmt: string, startOffset: number): PathStmt | undefined {
+  if (!/^\s*\\path\b/.test(stmt)) return undefined;
+  let i = stmt.indexOf("\\path") + "\\path".length;
   i = skipWs(stmt, i);
   // options
   const o1 = parseOptionsAt(stmt, i);
@@ -136,15 +293,16 @@ function parseDrawStmt(stmt: string, startOffset: number): DrawStmt | undefined 
     segments.push({ options: oseg.options, edgeNode, target: rt.ref });
   }
 
-  const draw: DrawStmt = {
-    kind: "DrawStmt",
+  const path: PathStmt = {
+    kind: "PathStmt",
     options: o1.options,
     source: rsrc.ref,
     segments,
     range: rng(startOffset, startOffset + stmt.length),
   };
-  return draw;
+  return path;
 }
+
 
 function splitStatements(body: string): { stmt: string; start: number }[] {
   const result: { stmt: string; start: number }[] = [];
@@ -207,7 +365,9 @@ function parseStmt(body: string, startOffset: number): TikzStmt | undefined {
   const stmt = body.slice(startOffset);
   return (
     parseNodeStmt(stmt, startOffset) ||
-    parseDrawStmt(stmt, startOffset)
+    parseDrawStmt(stmt, startOffset) ||
+    parseCoordinateStmt(stmt, startOffset) ||
+    parsePathStmt(stmt, startOffset)
   );
 }
 
