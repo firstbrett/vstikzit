@@ -10,7 +10,7 @@ import {
 } from "./buildTikz";
 import { viewCurrentTikzFigure } from "./viewTikz";
 import path from "path";
-import { openInlineTikz } from "./InlineTikz";
+import { openInlineTikz, registerInlineHandlers } from "./InlineTikz";
 const tzOut = vscode.window.createOutputChannel("TikZiT");
 
 function activate(context: vscode.ExtensionContext): void {
@@ -86,6 +86,7 @@ function activate(context: vscode.ExtensionContext): void {
       return openInlineTikz();
     })
   );
+  registerInlineHandlers(context);
   tzOut.appendLine(`[TikZiT] Registered commands.`);
 
   // // register the tikz link provider for LaTeX files

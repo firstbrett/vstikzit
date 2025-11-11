@@ -37,6 +37,15 @@ If you have a TeX file open, any `\tikzfig` or `\ctikzfig` commands will be dete
 This command will also jump to the graphical TikZ editor if you are viewing the source of a `.tikz` file.
 
 
+## Inline Editing in .tex (WIP)
+
+- Use the command “TikZiT: Open Inline TikZ Block” in a LaTeX file to open a detected block in a split view.
+- tikzpicture blocks open in the TikZiT graphical editor; saving the right-hand editor merges back to the .tex buffer.
+- circuitikz blocks currently open in a normal text editor with merge‑back on save.
+- If multiple blocks exist, you’ll be prompted to select one.
+
+This is an initial workflow; future releases aim to support circuitikz graphically via package metadata.
+
 ## Preview and Sync
 
 Like the desktop application, the TikZiT extension provides the ability to build and preview diagrams. Press `Ctrl+Shift+B` (or `Cmd+Shift+B` on Mac) to build the current diagram. This will create a PDF file in the `cache/` subdirectory of your workspace. Press `Ctrl+Shift+V` (or `Cmd+Shift+V` on Mac) to open a preview of the PDF. If you have installed the [LaTeX Workshop](https://marketplace.visualstudio.com/items?itemName=James-Yu.latex-workshop) extension, the preview will open in VS Code and will automatically update whenever you rebuild the diagram.

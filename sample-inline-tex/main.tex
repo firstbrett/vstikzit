@@ -1,16 +1,177 @@
-% Sample inline TikZ test file
 \documentclass{article}
-\usepackage{tikz}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{geometry}
+\usepackage[american,siunitx]{circuitikz}
+
+\geometry{a4paper, margin=1in}
+
 \begin{document}
 
-Some text before.
+\textbf{Problem 4-10)} \\
+An electromagnet is modeled as a 200-mH inductance in series with a 4-ohm resistance. The average current in the inductance must be 10 A to establish the required magnetic field. Determine the amount of additional series resistance required to produce the required average current from a bridge rectifier supplied from a single-phase 120-V, 60-Hz source.
 
-\begin{tikzpicture}
-  \node[draw,circle] (A) at (0,0) {A};
-  \node[draw,circle] (B) at (2,0) {B};
-  \draw (A) to (B);
-\end{tikzpicture}
+\begin{align*}
+    a) \quad & I_o = 10 \text{ A} = \frac{V_{avg}}{R} = \frac{2V_m}{\pi R} \\
+    & R = \frac{2V_m}{\pi I_o} = \frac{2(120)\sqrt{2}}{\pi 10} = 10.8 \, \Omega \text{ total} \\
+    & R_a = 10.8 - 4 = 6.8 \, \Omega
+\end{align*}
 
-Some text after.
+\hrulefill
+\vspace{1cm}
+
+\subsection*{Controlled Single-phase Rectifiers}
+
+\textbf{Problem 4-25)} \\
+The controlled single-phase full-wave bridge rectifier of Fig. 4-11a has an RL load with R = 25 ohm and L = 50 mH. The source is 240 V rms at 60 Hz. Determine the average load current for (a) $\alpha = 15^\circ$ and (b) $\alpha = 75^\circ$.
+
+\begin{figure}[h!]
+    \centering
+    \begin{circuitikz}
+        % 1. Source and surrounding box
+        \node[vsourcesin] (S) at (-4, 1.5) {};
+        \node[right=0.2cm of S, align=left] {$v_s(\omega t) = $ \\ $V_m \sin(\omega t)$};
+        \draw (-5.5, 3) rectangle (-2.5, 0);
+
+        % 2. Bridge connection points
+        \coordinate (Lmid) at (-0.5, 1.5);
+        \coordinate (Rmid) at (2, 1.5);
+        \coordinate (Ltop) at (-0.5, 3);
+        \coordinate (Lbot) at (-0.5, 0);
+        \coordinate (Rtop) at (2, 3);
+        \coordinate (Rbot) at (2, 0);
+
+        % 3. Thyristors in H-Bridge configuration
+        \draw (Ltop) to[thyristor] (Lmid);
+        \draw (Lbot) to[thyristor] (Lmid);
+        \draw (Rtop) to[thyristor] (Rmid);
+        \draw (Rbot) to[thyristor] (Rmid);
+        
+        % 4. AC connections from source to bridge midpoints
+        \draw (S.n) -- (Lmid);
+        \draw (S.s) -- Rmid; % This central line shorts the source in the original image, which is incorrect. A standard bridge connects the source terminals to the two separate midpoints.
+        \draw (Lmid) -- (Rmid); % Replicating the visual line from the example.
+
+        % 5. DC Rails with junction dots
+        \draw (Ltop) to[short, *-] (Rtop);
+        \draw (Lbot) to[short, *-] (Rbot);
+
+        % 6. R-L Load
+        \coordinate (LoadTop) at (3.5, 3);
+        \draw (Rtop) to[short] (LoadTop);
+        \draw (Rbot) to[short] ++(1.5, 0) coordinate (LoadBot);
+        \draw (LoadTop) to[short, i=$i_o$] ++(0, -0.25) to[R=R] ++(0, -1.25) to[L=L] ++(0, -1.25) -- (LoadBot);
+
+        % 7. Output Voltage Annotation
+        \draw (LoadTop)++(0.5,0) node[above]{+} to[open, v=$v_o$] ++(0,-3) node[below]{-};
+
+        % 8. Figure Sub-label
+        \node at (0.75, -0.75) {(a)};
+    \end{circuitikz}
+\end{figure}
+
+a) $\alpha = 15^\circ$: Check for continuous current. First period:
+\begin{align*}
+    i(\omega t) &= \frac{V_m}{Z}\sin((\omega t) - \theta) + A e^{-\omega t / \omega \tau} = 10.84\sin(\omega t - 0.646) + 5.75e^{-\omega t / 0.754} \\
+    i(\beta) &= 0 \rightarrow \beta = 217^\circ; \quad \beta - 180 = 37^\circ > \alpha \rightarrow \text{continuous current} \\
+    \text{Or} & \\
+    \theta &= \tan^{-1}\frac{\omega L}{R} = \tan^{-1}\frac{377(0.050)}{25} = 37^\circ > \alpha \rightarrow \text{continuous current} \\
+    V_o &= \frac{2V_m}{\pi}\cos\alpha = 208.7 \text{ V.}; \quad I_o = \frac{V_o}{R} = \frac{208.7}{25} = 8.35 \text{ A.}
+\end{align*}
+
+b) $\alpha = 75^\circ$: Check for continuous current. First period:
+\begin{align*}
+    \theta &= 37^\circ \text{ from part a, } \alpha = 75^\circ \rightarrow \text{discontinuous current} \\
+    i(\omega t) &= \frac{V_m}{Z}\sin((\omega t) - \theta) + A e^{-\omega t / \omega \tau} = 10.84\sin(\omega t - 0.646) - 37.9e^{-\omega t / 0.754} \\
+    i(\beta) &= 0 \rightarrow \beta = 216^\circ; \quad \beta - 180 = 36^\circ < \alpha \rightarrow \text{discontinuous current} \\
+    I_o &= \frac{1}{\pi} \int_{\alpha}^{\beta} i(\omega t) d(\omega t) = 2.32 \text{ A.}
+\end{align*}
+$\Rightarrow$ Correct error in the equation: 1/2pi (not 1/pi)
+
+\newpage
+\subsection*{Intro. Power Electronics \hfill Homework Assignment \#5}
+\vspace{1cm}
+\subsection*{Buck Converter}
+
+\textbf{Problem 6-4)} \\
+The buck converter of Fig. 6-3a has the following parameters: $V_s = 24 \text{ V, } D = 0.65\text{, } L = 25 \text{ µH, } C = 15 \text{ µF, and } R = 10 \text{ ohm}$. The switching frequency is 100 kHz. Determine (a) the output voltage, (b) the maximum and minimum inductor currents, and (c) the output voltage ripple.
+
+\begin{figure}[h!]
+    \centering
+    \begin{circuitikz}
+        \draw (0,3) node[left]{$V_s$} to[V, l_=$V_s$] (0,0);
+        \draw (0,3) -- (1,3);
+        \draw (1,3) to[closing switch, -*] (3,3);
+        \draw (1,0) -- (0,0);
+        \draw (1,0) node[diode, anchor=C] (D) {};
+        \draw (D.A) -- (3,3);
+
+        \node at (3,3) (J1){};
+        \draw (J1) to[L, l^=$v_L$, i^=$i_L$] ++(3,0) node(J2){};
+        \draw (J2) to[C, i^=$i_C$] ++(0,-3);
+        \draw (J2) to[short, i=$i_R$, *-*] ++(2,0) node(Rtop){};
+        \draw (Rtop) to[R=$R$] ++(0,-3) node(Rbot){};
+        \draw (Rbot) to[short] ++(-2,0) -- (1,0);
+
+        \draw (Rtop) to[open, v^>=$V_o$] (Rbot);
+    \end{circuitikz}
+\end{figure}
+
+a) $V_o = V_s D = (24)(0.65) = 15.6 \text{ V.}$ \\
+
+b) $I_L = I_R = \dfrac{V_o}{R} = \dfrac{15.6}{10} = 1.56 \text{ A.}$
+\begin{align*}
+    \Delta i_L &= \frac{V_o}{L}(1-D)T = \frac{15.6}{25(10)^{-6}}(1-0.65)\frac{1}{100,000} = 2.18 \text{ A.} \\
+    I_{L,max} &= I_L + \frac{\Delta i_L}{2} = 1.56 + \frac{2.18}{2} = 2.65 \text{ A.} \\
+    I_{L,min} &= I_L - \frac{\Delta i_L}{2} = 1.56 - \frac{2.18}{2} = 0.47 \text{ A.}
+\end{align*}
+
+c) $\Delta V_o = \dfrac{V_o(1-D)}{8LCf^2} = \dfrac{15.6(1-0.65)}{8(25)(10)^{-6}(15)(10)^{-6}(100,000)^2} = 0.182$
+\[
+\text{or } \frac{\Delta V_o}{V_o} = 1.17\%
+\]
+
+\hrulefill
+\vspace{1cm}
+
+\textbf{Problem 6-6)} \\
+The buck converter of Fig. 6-3a has an input of 50 V and an output of 25 V. The switching frequency is 100 kHz, and the output power to a load resistor is 125 W. (a) Determine the duty ratio. (b) Determine the value of inductance to limit the peak inductor current to 6.25 A. (c) Determine the value of capacitance to limit the output voltage ripple to 0.5 percent.
+
+\begin{figure}[h!]
+    \centering
+    \begin{circuitikz}
+        \draw (0,3) node[left]{$V_s$} to[V, l_=$V_s$] (0,0);
+        \draw (0,3) to[short] (1,3);
+        \node[mosfet, anchor=S, bulk] at (2,3) (M) {};
+        \draw (M.D) to[short] (1,3);
+        \draw (M.G) -- ++(-0.5,0);
+        \node[diode, anchor=C] at (2,0) (D) {};
+        \draw (D.A) -- (M.S);
+        
+        \node at (M.S) (J1){};
+        \draw (J1) to[L, l^=$v_L$, i^=$i_L$] ++(3,0) node(J2){};
+        \draw (J2) to[C, i^=$i_C$] ++(0,-3);
+        \draw (J2) to[short, i=$i_R$, *-*] ++(2,0) node(Rtop){};
+        \draw (Rtop) to[R=$R$] ++(0,-3) node(Rbot){};
+        \draw (Rbot) to[short] ++(-2,0) -- (2,0);
+        \draw (0,0) -- (D.K);
+        \node at (0,0) [ground]{};
+
+        \draw (Rtop) to[open, v^>=$V_o$] (Rbot);
+    \end{circuitikz}
+\end{figure}
+
+a) $D = \dfrac{V_o}{V_s} = \dfrac{25}{50} = 0.5$ \\
+
+b) $I_L = I_R = \dfrac{P_o}{V_o} = \dfrac{125}{25} = 5 \text{ A.}$
+\begin{align*}
+    I_{L,max} &= 6.25 \text{ A.} \Rightarrow \frac{\Delta i_L}{2} = 1.25; \; \Delta i_L = 2.5 \text{ A.} = \frac{V_o}{L}(1-D)T \\
+    L &= \frac{V_o}{\Delta i_L}(1-D)T = \frac{25}{2.5}(1-0.5)\frac{1}{100,000} = 50 \, \mu\text{H.}
+\end{align*}
+
+c) $\dfrac{\Delta V_o}{V_o} = 5\% = .005 = \dfrac{1-D}{8LCf^2}$
+\[
+C = \frac{1-D}{8\left(\dfrac{\Delta V_o}{V_o}\right)Lf^2} = \frac{1-0.5}{8(.005)(50)(10)^{-6}(100,000)^2} = 25 \, \mu\text{F.}
+\]
 
 \end{document}
