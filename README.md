@@ -117,3 +117,9 @@ Two scripts are provided to streamline local development and release packaging.
   - `pwsh scripts/package-release.ps1`
   - Installs deps (ci with fallback), performs a clean build + `vsce package`, and prints the path of the generated `.vsix`.
   - Flags: `-Install` to install into your VS Code after packaging, `-VSCodeCmd <code.cmd>`
+
+### Parser/Serializer work-in-progress
+
+- A preservation-first parser/serializer now lives in `src/parser/`.
+- It detects `tikzpicture` / `circuitikz` environments, parses TikZ nodes/draw chains, and keeps circuitikz metadata intact for future GUI integration.
+- See `docs/PARSER.md` for the latest architecture notes and extension guidelines.

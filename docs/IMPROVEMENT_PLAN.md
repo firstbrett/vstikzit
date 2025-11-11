@@ -17,8 +17,18 @@ This roadmap tracks the TikZiT Extension Improvement Plan from AGENTS.md and map
   - `ast.ts`: simple AST representing `RawText`, `EnvironmentBlock`, and `CommandStmt`.
   - `index.ts`: permissive scanner `parseTikzDocument()` that extracts `tikzpicture`/`circuitikz` env blocks and preserves everything else as raw text, plus `serializeTikzDocument()` for round-tripping.
   - `errors.ts`, `util.ts`: helpers and error types.
-- Added tests: `src/test/fullparser.test.ts` to validate round‑trip and block discovery.
-- This provides a safe round‑trip base we can extend with deeper parsing for commands/paths without breaking formatting.
+- Shared helpers (`src/parser/shared.ts`) normalize whitespace handling, `[options]`, and coordinate refs across TikZ/circuitikz sub-parsers.
+- Added tests: `src/test/fullparser.test.ts` to validate round-trip and block discovery.
+- This provides a safe round-trip base we can extend with deeper parsing for commands/paths without breaking formatting.
+
+### TikZ + Circuitikz body parsing (in progress)
+- TikZ picture module (`src/parser/tikz/…`):
+  - Parses `\node` and chained `\draw ... to ...` statements, including `[->]`, inline nodes, and `pgfonlayer` sections.
+  - Adapter (`src/parser/adapter.ts`) converts parsed statements into the existing `Graph`/`NodeData`/`EdgeData` model so the GUI still works.
+- Circuitikz module (`src/parser/circuitikz/…`):
+  - Parses `\draw ... to[component] ...` chains and plain wires (`--`), preserving component metadata for future visualization.
+  - Currently used to support inline editing and AST extraction; GUI adapters are the next milestone.
+- Tests (`src/test/tikzpicture_adapter.test.ts`, `src/test/circuitikz_parser.test.ts`) cover these features.
 
 ## 2. Style Ingestion & Palette
 - Current: `.tikzstyles` auto-read via `BaseEditorProvider.getTikzStyles()` and visible in Style Panel.

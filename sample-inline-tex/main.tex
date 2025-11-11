@@ -49,7 +49,7 @@ The controlled single-phase full-wave bridge rectifier of Fig. 4-11a has an RL l
         
         % 4. AC connections from source to bridge midpoints
         \draw (S.n) -- (Lmid);
-        \draw (S.s) -- Rmid; % This central line shorts the source in the original image, which is incorrect. A standard bridge connects the source terminals to the two separate midpoints.
+        \draw (S.s) -- (Rmid); % This central line shorts the source in the original image, which is incorrect. A standard bridge connects the source terminals to the two separate midpoints.
         \draw (Lmid) -- (Rmid); % Replicating the visual line from the example.
 
         % 5. DC Rails with junction dots
@@ -176,6 +176,7 @@ C = \frac{1-D}{8\left(\dfrac{\Delta V_o}{V_o}\right)Lf^2} = \frac{1-0.5}{8(.005)
 
 
 
+
 \begin{tikzpicture}
         % 1. Define all nodes (coordinates snapped to nearest 0.25)
         \node (0) at (-1, -1.25) {};
@@ -237,12 +238,12 @@ C = \frac{1-D}{8\left(\dfrac{\Delta V_o}{V_o}\right)Lf^2} = \frac{1-0.5}{8(.005)
         \draw [->] (17) to (18);
         \draw (23) to (24);
         \draw (25) to (26);
-        \draw [->] (27) to (28);
-        \draw [->] (29) to (30);
-        \draw (35) to (36);
-        \draw (37) to (38);
-        \draw [->] (39) to (40);
-        \draw [->] (41) to (42);
+    \draw [->] (27) to (28);
+    \draw [->] (29) to (30);
+    \draw (35) to (36);
+    \draw (37) to (38);
+    \draw [->] (39) to (40);
+    \draw [->] (41) to (42);
 \end{tikzpicture}
 
 \end{document}

@@ -18,7 +18,16 @@ function rng(start: number, end: number): Range {
 const reOpt = /\[([^\]]*)\]/y;
 const reCoord = /\(([^)]+)\)/y;
 
+function skipWs(src: string, i: number): number {
+  while (i < src.length) {
+    const c = src[i];
+    if (c === " " || c === "\t" || c === "\n" || c === "\r") i++; else break;
+  }
+  return i;
+}
+
 function parseOptionsAt(src: string, i: number): { options?: TikzOptionList; next: number } {
+  i = skipWs(src, i);
   reOpt.lastIndex = i;
   const m = reOpt.exec(src);
   if (!m) return { next: i };
@@ -26,6 +35,7 @@ function parseOptionsAt(src: string, i: number): { options?: TikzOptionList; nex
 }
 
 function parseRef(str: string, i: number): { ref?: PathRef; next: number } {
+  i = skipWs(str, i);
   reCoord.lastIndex = i;
   const m = reCoord.exec(str);
   if (!m) return { next: i };
@@ -49,6 +59,7 @@ function parseNodeStmt(stmt: string, startOffset: number): NodeStmt | undefined 
   // \node [opts] (name) at (x, y) {label};
   if (!/^\s*\\node\b/.test(stmt)) return undefined;
   let i = stmt.indexOf("\\node") + "\\node".length;
+  i = skipWs(stmt, i);
   // options
   const o1 = parseOptionsAt(stmt, i);
   i = o1.next;
@@ -80,6 +91,7 @@ function parseNodeStmt(stmt: string, startOffset: number): NodeStmt | undefined 
 function parseDrawStmt(stmt: string, startOffset: number): DrawStmt | undefined {
   if (!/^\s*\\draw\b/.test(stmt)) return undefined;
   let i = stmt.indexOf("\\draw") + "\\draw".length;
+  i = skipWs(stmt, i);
   // options
   const o1 = parseOptionsAt(stmt, i);
   i = o1.next;
@@ -90,6 +102,7 @@ function parseDrawStmt(stmt: string, startOffset: number): DrawStmt | undefined 
   const segments: ToSegment[] = [];
   const toRe = /\bto\b/y;
   while (true) {
+    i = skipWs(stmt, i);
     toRe.lastIndex = i;
     const tm = toRe.exec(stmt);
     if (!tm) break;
@@ -99,6 +112,7 @@ function parseDrawStmt(stmt: string, startOffset: number): DrawStmt | undefined 
     i = oseg.next;
     // optional inline node: node[...]{...}
     const nodeRe = /\bnode\b/y;
+    i = skipWs(stmt, i);
     nodeRe.lastIndex = i;
     let edgeNode;
     const nm = nodeRe.exec(stmt);
@@ -107,6 +121,7 @@ function parseDrawStmt(stmt: string, startOffset: number): DrawStmt | undefined 
       const on = parseOptionsAt(stmt, i);
       i = on.next;
       const labelRe = /\{([^}]*)\}/y;
+      i = skipWs(stmt, i);
       labelRe.lastIndex = i;
       const lb = labelRe.exec(stmt);
       if (lb) {
@@ -202,4 +217,3 @@ function parseTikzPictureBody(body: string, optionsRaw?: string): TikzPicture {
 }
 
 export { parseTikzPictureBody };
-

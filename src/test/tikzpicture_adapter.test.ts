@@ -16,5 +16,16 @@ describe("TikZ picture adapter -> Graph", () => {
     assert.equal(g.edge(0)?.source, 0);
     assert.equal(g.edge(0)?.target, 1);
   });
-});
 
+  it("handles draw options and whitespace", () => {
+    const body = `
+      \\node (0) at (0,0) {A};
+      \\node (1) at (1,0) {B};
+      \\draw   [->]   (0)  to   (1);
+    `;
+    const pic = parseTikzPictureBody(body);
+    const g = pictureToGraph(pic);
+    // one edge still created despite [->] and spacing
+    assert.equal(g.numEdges, 1);
+  });
+});
