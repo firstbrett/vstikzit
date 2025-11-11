@@ -283,6 +283,10 @@ class BaseEditorProvider {
 
   async openTikzStyles(): Promise<void> {
     const [styleFile, _] = await this.getTikzStyles(false);
+    if (!styleFile) {
+      vscode.window.showInformationMessage("No .tikzstyles file found in this workspace.");
+      return;
+    }
     vscode.commands.executeCommand("vscode.open", vscode.Uri.file(styleFile));
   }
 

@@ -6,6 +6,7 @@ import Styles from "../lib/Styles";
 import Style from "./Style";
 import { StyleData } from "../lib/Data";
 import TikzitHostContext from "./TikzitHostContext";
+import { isValidStyleName, suggestStyleName } from "../lib/validation";
 
 interface StyleEditorContent {
   config: { [key: string]: any };
@@ -91,6 +92,14 @@ const StyleEditor = ({ initialContent }: StyleEditorProps) => {
 
   const applyStyleChanges = (): boolean => {
     let updatedStyles = tikzStyles;
+    if (!isValidStyleName(currentStyleData.name)) {
+      alert(
+        `Invalid style name. Use A–Z, a–z, 0–9, and ':' only.\nSuggestion: ${suggestStyleName(
+          currentStyleData.name
+        )}`
+      );
+      return false;
+    }
     if (currentStyleData.name !== currentStyle && tikzStyles.hasStyle(currentStyleData.name)) {
       alert("A style with this name already exists.");
       return false;

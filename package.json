@@ -54,7 +54,9 @@
       { "command": "vstikzit.mergeNodes", "title": "Edit > Merge Nodes", "category": "TikZiT", "when": "activeCustomEditorId == vstikzit.tikzEditor" },
       { "command": "vstikzit.viewCurrentTikzFigure", "title": "View > TikZ figure PDF", "category": "TikZiT", "when": "activeCustomEditorId == vstikzit.tikzEditor" },
       { "command": "vstikzit.viewTikzSource", "title": "View > TikZ Source", "category": "TikZiT", "when": "activeCustomEditorId == vstikzit.tikzEditor" },
-      { "command": "vstikzit.toggleStylePanel", "title": "View > Toggle Style Panel", "category": "TikZiT", "when": "activeCustomEditorId == vstikzit.tikzEditor" }
+      { "command": "vstikzit.toggleStylePanel", "title": "View > Toggle Style Panel", "category": "TikZiT", "when": "activeCustomEditorId == vstikzit.tikzEditor" },
+      { "command": "vstikzit.openInlineTikz", "title": "Open Inline TikZ Block", "category": "TikZiT" },
+      { "command": "vstikzit.openOrCreateTikz", "title": "Open or Create TikZ Figure", "category": "TikZiT" }
     ],
     "keybindings": [
       { "command": "vstikzit.openTikzEditor", "key": "ctrl+alt+t", "mac": "cmd+alt+t",
@@ -73,7 +75,8 @@
       { "command": "vstikzit.mergeNodes", "key": "ctrl+m", "mac": "cmd+m", "when": "activeCustomEditorId == vstikzit.tikzEditor" },
       { "command": "vstikzit.viewCurrentTikzFigure", "key": "ctrl+alt+v", "mac": "cmd+alt+v", "when": "activeCustomEditorId == vstikzit.tikzEditor" },
       { "command": "vstikzit.viewTikzSource", "key": "ctrl+alt+t", "mac": "cmd+alt+t", "when": "activeCustomEditorId == vstikzit.tikzEditor" },
-      { "command": "vstikzit.toggleStylePanel", "key": "ctrl+alt+s", "mac": "cmd+alt+s", "when": "activeCustomEditorId == vstikzit.tikzEditor" }
+      { "command": "vstikzit.toggleStylePanel", "key": "ctrl+alt+s", "mac": "cmd+alt+s", "when": "activeCustomEditorId == vstikzit.tikzEditor" },
+      { "command": "vstikzit.openInlineTikz", "key": "ctrl+alt+i", "mac": "cmd+alt+i", "when": "resourceExtname == .tex" }
     ],
     "languages": [
       {

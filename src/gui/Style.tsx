@@ -1,4 +1,5 @@
 import { colorFromHex, colorToHex, texColors } from "../lib/color";
+import { isValidStyleName, suggestStyleName } from "../lib/validation";
 import { StyleData } from "../lib/Data";
 import ColorPicker from "./ColorPicker";
 import InputWithOptions from "./InputWithOptions";
@@ -49,6 +50,18 @@ const Style = ({ data, onChange, enabled }: StyleProps) => {
               value={data.name}
               onInput={e => onChange(data.setName((e.target as HTMLInputElement).value))}
             />
+            {!isValidStyleName(data.name) && (
+              <div style={{ color: "var(--tikzit-errorForeground)", fontSize: "0.85em" }}>
+                Invalid name. Use A–Z, a–z, 0–9, and ':' only.
+                <button
+                  style={{ marginLeft: "8px" }}
+                  onClick={() => onChange(data.setName(suggestStyleName(data.name)))}
+                  disabled={!enabled}
+                >
+                  Fix
+                </button>
+              </div>
+            )}
           </td>
         </tr>
         <tr>

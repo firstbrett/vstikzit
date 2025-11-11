@@ -10,6 +10,7 @@ import {
 } from "./buildTikz";
 import { viewCurrentTikzFigure } from "./viewTikz";
 import path from "path";
+import { openInlineTikz } from "./InlineTikz";
 
 function activate(context: vscode.ExtensionContext): void {
   // register the custom tikz editor
@@ -74,6 +75,11 @@ function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(
     vscode.commands.registerCommand("vstikzit.openOrCreateTikz", openOrCreateTikz)
+  );
+
+  // Inline TikZ: open tikzpicture blocks in TikZiT (scaffold)
+  context.subscriptions.push(
+    vscode.commands.registerCommand("vstikzit.openInlineTikz", openInlineTikz)
   );
 
   // // register the tikz link provider for LaTeX files

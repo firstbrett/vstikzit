@@ -53,6 +53,14 @@ To start syncing, open the command palette and select "TikZiT: Sync TikZ Figures
 
 Both the build and sync commands have variants that will build to SVG instead of PDF, e.g. for use on the web or in [HTML slides](https://www.cs.ox.ac.uk/people/aleks.kissinger/slides/zx/pqs-zx-seminar-sept2025-60min.html). These are both available from the command palette.
 
+### Prerequisites for build/preview
+
+The build features require LaTeX tools to be installed and present on your system `PATH`:
+- `pdflatex` (for PDF output)
+- `dvisvgm` (for SVG output)
+
+If missing, commands such as “Build TikZ figure” and “Sync TikZ Figures” will fail. Install a LaTeX distribution (e.g., TeX Live or MiKTeX) that includes these tools.
+
 ## TODO
 
 The extension is nearly at feature parity with the desktop application, but there are still some things to do:
@@ -63,6 +71,16 @@ The extension is nearly at feature parity with the desktop application, but ther
 - [ ] Customization via user settings (colors, paths, keybindings, etc)
 - [ ] Support for labels next to nodes via `label=` property
 - [ ] Automatically crash editor when `B` key is pressed (currently not planned)
+
+## Roadmap and Inline TikZ (WIP)
+
+We are actively extending the extension per the plan in `docs/IMPROVEMENT_PLAN.md`:
+
+- Parser/serializer improvements to preserve original identifiers, layers, and formatting on round trips.
+- Style name validation (ASCII alphanumeric/colon) with auto‑fix suggestions in the Style editor UI.
+- Split‑view editing of inline `\begin{tikzpicture}` blocks in `.tex` files. A scaffold command is available:
+  - Run "TikZiT: Open Inline TikZ Block" in a LaTeX file to open a detected block in the TikZiT editor (untitled tab beside the source). Merge‑back is coming soon.
+
 
 ## Development
 
@@ -75,3 +93,17 @@ To set up a development environment, you just need `npm` and `git`. Clone the re
 - `npm run package` - Create a `.vsix` file for distribution
 
 There are also build scripts for a standalone version that runs in the browser. This can be run using `npm run preview`. This is currently just experimental, but I may find some use for it in the future.
+
+### Quick dev + inline TikZ test (PowerShell)
+
+On Windows or PowerShell, run the helper script to check deps, build/package, install the extension, and open a sample `.tex` file ready for inline TikZ testing:
+
+- `pwsh scripts/dev-check-and-run.ps1`
+
+Options:
+- `-SkipInstall` to skip `npm ci`
+- `-SkipPackage` to build without packaging (not recommended if you want to install into VS Code)
+- `-InstallLaTeXWorkshop` to ensure LaTeX Workshop is installed
+- `-VSCodeCmd path\to\code.cmd` to specify a custom VS Code CLI
+
+After launch, open `main.tex` and run the command “TikZiT: Open Inline TikZ Block” (Ctrl+Alt+I) to try the split-view editor.
