@@ -1,0 +1,16 @@
+% Sample inline TikZ test file
+\documentclass{article}
+\usepackage{tikz}
+\begin{document}
+
+Some text before.
+
+\begin{tikzpicture}
+  \node[draw,circle] (A) at (0,0) {A};
+  \node[draw,circle] (B) at (2,0) {B};
+  \draw (A) to (B);
+\end{tikzpicture}
+
+Some text after.
+
+\end{document}

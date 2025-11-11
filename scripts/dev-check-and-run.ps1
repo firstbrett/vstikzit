@@ -3,7 +3,8 @@ param(
   [switch]$SkipPackage = $false,
   [string]$VSCodeCmd = "code",
   [switch]$InstallLaTeXWorkshop = $false,
-  [switch]$OpenSample = $true
+  [switch]$OpenSample = $true,
+  [switch]$DevHost = $false
 )
 
 function Test-Command {
@@ -41,19 +42,23 @@ if (-not $SkipInstall) {
 }
 
 Write-Host "[3/6] Building/Packaging extension..." -ForegroundColor Cyan
-if ($SkipPackage) {
+if ($DevHost -or $SkipPackage) {
   npm run build | Write-Output
 } else {
   npm run package | Write-Output
 }
 
-# Find latest VSIX produced
-$vsix = Get-ChildItem -File -Filter "*.vsix" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-if (-not $vsix) { Write-Error "No .vsix produced. Ensure 'npm run package' succeeded." -ErrorAction Stop }
-Write-Host "Using VSIX: $($vsix.FullName)" -ForegroundColor Green
+if (-not $DevHost) {
+  # Find latest VSIX produced
+  $vsix = Get-ChildItem -File -Filter "*.vsix" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+  if (-not $vsix) { Write-Error "No .vsix produced. Ensure 'npm run package' succeeded." -ErrorAction Stop }
+  Write-Host "Using VSIX: $($vsix.FullName)" -ForegroundColor Green
 
-Write-Host "[4/6] Installing extension into VS Code..." -ForegroundColor Cyan
-& $VSCodeCmd --install-extension $vsix.FullName --force | Write-Output
+  Write-Host "[4/6] Installing extension into VS Code..." -ForegroundColor Cyan
+  & $VSCodeCmd --install-extension $vsix.FullName --force | Write-Output
+} else {
+  Write-Host "[4/6] Skipping VSIX install (DevHost mode)." -ForegroundColor Yellow
+}
 
 # Ensure LaTeX Workshop if requested
 if ($InstallLaTeXWorkshop) {
@@ -91,11 +96,18 @@ Write-Host "[6/6] Launching VS Code with sample." -ForegroundColor Cyan
 if ($OpenSample) {
   # Try to run the inline command on startup (supported in newer VS Code)
   try {
-    & $VSCodeCmd $sampleDir -g (Join-Path $sampleDir "main.tex"):8 --command vstikzit.openInlineTikz | Write-Output
+    if ($DevHost) {
+      & $VSCodeCmd $sampleDir --extensionDevelopmentPath (Get-Location).Path -g (Join-Path $sampleDir "main.tex"):8 --command vstikzit.openInlineTikz | Write-Output
+    } else {
+      & $VSCodeCmd $sampleDir -g (Join-Path $sampleDir "main.tex"):8 --command vstikzit.openInlineTikz | Write-Output
+    }
   } catch {
-    & $VSCodeCmd $sampleDir -g (Join-Path $sampleDir "main.tex"):8 | Write-Output
+    if ($DevHost) {
+      & $VSCodeCmd $sampleDir --extensionDevelopmentPath (Get-Location).Path -g (Join-Path $sampleDir "main.tex"):8 | Write-Output
+    } else {
+      & $VSCodeCmd $sampleDir -g (Join-Path $sampleDir "main.tex"):8 | Write-Output
+    }
   }
 }
 
 Write-Host "Done. In VS Code, run: 'TikZiT: Open Inline TikZ Block' (Ctrl+Alt+I) in main.tex to test the split-view editor." -ForegroundColor Green
-

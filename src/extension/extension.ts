@@ -11,8 +11,10 @@ import {
 import { viewCurrentTikzFigure } from "./viewTikz";
 import path from "path";
 import { openInlineTikz } from "./InlineTikz";
+const tzOut = vscode.window.createOutputChannel("TikZiT");
 
 function activate(context: vscode.ExtensionContext): void {
+  tzOut.appendLine(`[TikZiT] Activating at ${new Date().toISOString()}`);
   // register the custom tikz editor
   context.subscriptions.push(
     vscode.window.registerCustomEditorProvider(
@@ -79,8 +81,12 @@ function activate(context: vscode.ExtensionContext): void {
 
   // Inline TikZ: open tikzpicture blocks in TikZiT (scaffold)
   context.subscriptions.push(
-    vscode.commands.registerCommand("vstikzit.openInlineTikz", openInlineTikz)
+    vscode.commands.registerCommand("vstikzit.openInlineTikz", () => {
+      tzOut.appendLine(`[TikZiT] Command invoked: vstikzit.openInlineTikz`);
+      return openInlineTikz();
+    })
   );
+  tzOut.appendLine(`[TikZiT] Registered commands.`);
 
   // // register the tikz link provider for LaTeX files
   // context.subscriptions.push(
